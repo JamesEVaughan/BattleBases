@@ -9,9 +9,9 @@ public class UnitMovement : MonoBehaviour
 	/// </summary>
 	public float WalkSpeed = .5f;
 	/// <summary>
-	/// The time each turn takes
+	/// How long to wait for the next walking turn
 	/// </summary>
-	public static float TurnTime = 0.5f;
+	public float TurnTime = 0.5f;
 
 	// Fields
 	/// <summary>
@@ -27,10 +27,6 @@ public class UnitMovement : MonoBehaviour
 	/// </summary>
 	private Vector3 walkDistance;
 	/// <summary>
-	/// When we start walking again.
-	/// </summary>
-	private float nextWalk;
-	/// <summary>
 	/// True if this unit is walking
 	/// </summary>
 	private bool isWalking;
@@ -39,9 +35,25 @@ public class UnitMovement : MonoBehaviour
 	/// </summary>
 	private bool isFighting;
 	/// <summary>
-	/// When the walk will end
+	/// Long we've been walking
 	/// </summary>
-	private float endWalk;
+	private float curWalkTime;
+	/// <summary>
+	/// Where we started walking
+	/// </summary>
+	private Vector3 WalkStart;
+	/// <summary>
+	/// Where we'll end up at the end of our walk
+	/// </summary>
+	private Vector3 WalkDest;
+	/// <summary>
+	/// When to start walking again
+	/// </summary>
+	private float nextWalk;
+	/// <summary>
+	/// The tag of our enemies
+	/// </summary>
+	private string enemyTag;
 
 	// Initialization
 	void Awake()
@@ -53,8 +65,10 @@ public class UnitMovement : MonoBehaviour
 		direction = transform.TransformDirection(Vector3.left);
 
 		// We start walking, but not fighting on awake
-		StartWalking(Time.time);
+		StartWalking();
 		isFighting = false;
+
+		enemyTag = (this.tag == "Blue") ? "Red" : "Blue";
 	}
 
 	// Physics update
@@ -68,33 +82,82 @@ public class UnitMovement : MonoBehaviour
 		}
 
 		// Should we start walking?
-		if (!isWalking && nextWalk > Time.fixedTime) 
+		if (!isWalking && nextWalk < Time.fixedTime) 
 		{
-			StartWalking (Time.fixedTime);
+			float tempy = Time.fixedTime;
+			StartWalking ();
 		}
 
 		if (isWalking) 
 		{
-			Walk (Time.fixedTime);
+			// Tell Walk() how long has passed
+			Walk (Time.deltaTime);
 		}
 
 	}
 
+	void OnTriggerEnter(Collider other)
+	{
+		// Let's find out what entered our trigger
+		string tempTag = other.tag;
+
+		if (tempTag == enemyTag) {
+			// We're fighting now!
+			StartFighting (other.gameObject);
+		} 
+		else 
+		{
+			// Otherwise, just stop moving
+			isWalking = false;
+		}
+	}
+
+	/// <summary>
+	/// Called when we start fighting, will fire a fighting event
+	/// </summary>
+	/// <param name="enemy">The enemy we're fighting against</param>
+	void StartFighting(GameObject enemy)
+	{
+		isFighting = true;
+	}
+
 	// Helper functions
 	/// <summary>
-	/// Moves unit based on
+	/// Moves unit forward, using interpolation
 	/// </summary>
 	private void Walk(float t)
 	{
-		isWalking = endWalk < t;
+		curWalkTime += t;
+
+		// If this is longer than we're supposed to walk
+		if (curWalkTime > TurnTime) 
+		{
+			// Make it the last turn
+			curWalkTime = TurnTime;
+
+			// Stop walking after this time
+			isWalking = false;
+
+			// Start walking after TurnTime
+			nextWalk = Time.fixedTime + TurnTime;
+		}
+
+		transform.position = Vector3.Lerp (WalkStart, WalkDest, curWalkTime / TurnTime);
 	}
 	/// <summary>
-	/// Set the unit to walking
+	/// We're about to start walking, setup our variables
 	/// </summary>
 	/// <param name="t">The time this update started</param>
-	private void StartWalking(float t)
+	private void StartWalking()
 	{
+		// Let the world know we are walking
 		isWalking = true;
-		endWalk = t + TurnTime;
+
+		curWalkTime = 0f;
+
+		// Caculate our destination
+		WalkStart = transform.position;
+			
+		WalkDest = transform.position + (direction * WalkSpeed);
 	}
 }
