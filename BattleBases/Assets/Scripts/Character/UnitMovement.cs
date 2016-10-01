@@ -7,7 +7,7 @@ public class UnitMovement : MonoBehaviour
 	/// <summary>
 	/// How many units can we walk each turn
 	/// </summary>
-	public float WalkSpeed = .5f;
+	public float WalkSpeed = 1f;
 	/// <summary>
 	/// How long to wait for the next walking turn
 	/// </summary>
@@ -27,17 +27,9 @@ public class UnitMovement : MonoBehaviour
 	/// </summary>
 	private Vector3 walkDistance;
 	/// <summary>
-	/// True if this unit is walking
+	/// Ture if this unit can walk, as in is not blocked
 	/// </summary>
-	private bool isWalking;
-	/// <summary>
-	/// Ture if this unit is in combat
-	/// </summary>
-	private bool isFighting;
-	/// <summary>
-	/// Long we've been walking
-	/// </summary>
-	private float curWalkTime;
+	private bool canWalk;
 	/// <summary>
 	/// Where we started walking
 	/// </summary>
@@ -55,6 +47,17 @@ public class UnitMovement : MonoBehaviour
 	/// </summary>
 	private string enemyTag;
 
+	//Properties
+	/// <summary>
+	/// Long we've been walking
+	/// </summary>
+	public float CurWalkTime { get; private set; }
+	/// <summary>
+	/// True if this unit is walking
+	/// </summary>
+	public bool IsWalking { get; private set; }
+
+
 	// Initialization
 	void Awake()
 	{
@@ -64,9 +67,9 @@ public class UnitMovement : MonoBehaviour
 		// Get a quick reference to our direction
 		direction = transform.TransformDirection(Vector3.left);
 
-		// We start walking, but not fighting on awake
+		// We start walking
 		StartWalking();
-		isFighting = false;
+		canWalk = true;
 
 		enemyTag = (this.tag == "Blue") ? "Red" : "Blue";
 	}
@@ -74,21 +77,21 @@ public class UnitMovement : MonoBehaviour
 	// Physics update
 	void FixedUpdate()
 	{
-		// First, are we currently fighting?
-		if (isFighting) 
+		// First, are we allowed to walk
+		if (!canWalk) 
 		{
 			// Then we're not moving
 			return;
 		}
 
 		// Should we start walking?
-		if (!isWalking && nextWalk < Time.fixedTime) 
+		if (!IsWalking && nextWalk < Time.fixedTime) 
 		{
 			float tempy = Time.fixedTime;
 			StartWalking ();
 		}
 
-		if (isWalking) 
+		if (IsWalking) 
 		{
 			// Tell Walk() how long has passed
 			Walk (Time.deltaTime);
@@ -96,29 +99,34 @@ public class UnitMovement : MonoBehaviour
 
 	}
 
+	/// <summary>
+	/// Fired when something enters our front collider
+	/// </summary>
+	/// <param name="other">Other.</param>
 	void OnTriggerEnter(Collider other)
 	{
-		// Let's find out what entered our trigger
-		string tempTag = other.tag;
-
-		if (tempTag == enemyTag) {
-			// We're fighting now!
-			StartFighting (other.gameObject);
-		} 
-		else 
+		// First, did we enter someone else's Trigger box?
+		if (!other.isTrigger) 
 		{
-			// Otherwise, just stop moving
-			isWalking = false;
-		}
+			// Something is in our collider, don't walk
+			canWalk = false;
+		} 
+
+		// If we entered someone else trigger, don't do anything
 	}
 
 	/// <summary>
-	/// Called when we start fighting, will fire a fighting event
+	/// Fired when something leaves our front collider
 	/// </summary>
-	/// <param name="enemy">The enemy we're fighting against</param>
-	void StartFighting(GameObject enemy)
+	/// <param name="other">Other.</param>
+	void OnTriggerExit(Collider other)
 	{
-		isFighting = true;
+		// First, did someone leave our trigger box?
+		if (!other.isTrigger) 
+		{
+			// We can walk again!
+			StartWalking();
+		}
 	}
 
 	// Helper functions
@@ -127,22 +135,22 @@ public class UnitMovement : MonoBehaviour
 	/// </summary>
 	private void Walk(float t)
 	{
-		curWalkTime += t;
+		CurWalkTime += t;
 
 		// If this is longer than we're supposed to walk
-		if (curWalkTime > TurnTime) 
+		if (CurWalkTime > TurnTime) 
 		{
 			// Make it the last turn
-			curWalkTime = TurnTime;
+			CurWalkTime = TurnTime;
 
 			// Stop walking after this time
-			isWalking = false;
+			IsWalking = false;
 
 			// Start walking after TurnTime
 			nextWalk = Time.fixedTime + TurnTime;
 		}
 
-		transform.position = Vector3.Lerp (WalkStart, WalkDest, curWalkTime / TurnTime);
+		transform.position = Vector3.Lerp (WalkStart, WalkDest, CurWalkTime / TurnTime);
 	}
 	/// <summary>
 	/// We're about to start walking, setup our variables
@@ -151,9 +159,10 @@ public class UnitMovement : MonoBehaviour
 	private void StartWalking()
 	{
 		// Let the world know we are walking
-		isWalking = true;
+		IsWalking = true;
+		canWalk = true;
 
-		curWalkTime = 0f;
+		CurWalkTime = 0f;
 
 		// Caculate our destination
 		WalkStart = transform.position;
