@@ -26,6 +26,15 @@ public class SpawnManager : MonoBehaviour {
 	public float SpawnTimer = 0f;
 
 	// Fields
+	/// <summary>
+	/// A reference to our active combat manager
+	/// </summary>
+	private CombatManager combat;
+
+	// Enums
+	/// <summary>
+	/// Handy reference to the available teams
+	/// </summary>
 	private enum Team
 	{
 		Red,
@@ -35,7 +44,8 @@ public class SpawnManager : MonoBehaviour {
 	// Methods
 	void Awake()
 	{
-		// Nothing for now
+		// Grab our CombatManger
+		combat = GetComponent<CombatManager>();
 	}
 
 	void Update()
@@ -59,15 +69,25 @@ public class SpawnManager : MonoBehaviour {
 	// Helper functions
 	private void Spawn(Team t)
 	{
+		// Reference to the new object we're spawning
+		Object tempObj = null;
+
 		if (t == Team.Red) 
 		{
-			Instantiate (RedUnit, RedSpawn.transform.position, RedSpawn.transform.rotation);
+			tempObj = Instantiate (RedUnit, RedSpawn.transform.position, RedSpawn.transform.rotation);
 		} 
 		else if (t == Team.Blue) 
 		{
-			Instantiate (BlueUnit, BlueSpawn.transform.position, BlueSpawn.transform.rotation);
+			tempObj = Instantiate (BlueUnit, BlueSpawn.transform.position, BlueSpawn.transform.rotation);
 		}
 
-		SpawnTimer = Time.time + 1f;
+		// Only do changes if we spawned something
+		if (tempObj is GameObject) 
+		{
+			// Tell the combat manager we spawned a new unit
+			combat.OnSpawn (tempObj as GameObject);
+
+			SpawnTimer = Time.time + 1f;
+		}
 	}
 }

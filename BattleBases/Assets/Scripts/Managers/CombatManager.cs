@@ -40,12 +40,24 @@ public class CombatManager : MonoBehaviour
 		}
 
 		// Do we have a fight pending?
-		if (nextFightTime > Time.time) 
+		if (nextFightTime < Time.time) 
 		{
 			// Ok, then get it going!
 			if (nextBattle.Attack ()) 
 			{
-				// The battle is over!
+				// The battle is over, tell the combatants
+				if (nextBattle.Fighter1.IsDead) 
+				{
+					// Fighter1 is dead! Long live Fighter2!
+					nextBattle.Fighter1.gameObject.SendMessage ("OnDeath", null, SendMessageOptions.DontRequireReceiver);
+					nextBattle.Fighter2.gameObject.SendMessage ("OnVictory", null, SendMessageOptions.DontRequireReceiver);
+				} 
+				else 
+				{
+					// Fighter2 is dead! Long live Fighter1!
+					nextBattle.Fighter2.gameObject.SendMessage ("OnDeath", null, SendMessageOptions.DontRequireReceiver);
+					nextBattle.Fighter1.gameObject.SendMessage ("OnVictory", null, SendMessageOptions.DontRequireReceiver);
+				}
 				curFights.Remove(nextBattle);
 			}
 
@@ -55,12 +67,78 @@ public class CombatManager : MonoBehaviour
 	}
 
 	// Methods
+
+	// Events
+	/// <summary>
+	/// Listens for spawn events, not actually wired as a C# event due to single use
+	/// nature
+	/// </summary>
+	/// <param name="newGO">A newly created GameObject</param>
+	public void OnSpawn(GameObject newGO)
+	{
+		// We only care about GameObjects with BaseFighter components
+		BaseFighter newBF = newGO.GetComponent<BaseFighter>();
+		if (newBF == null) 
+		{
+			// It doesn't have a BaseFighter, ignore
+			return;
+		}
+
+		// Subscribe to it's CombatEvents
+		newBF.CombatEvent += OnCombat;
+	}
+
+	/// <summary>
+	/// Listens for CombatEvents
+	/// </summary>
+	/// <param name="sender">The object sending this argument</param>
+	/// <param name="combatArgs">The event arguments</param>
+	public void OnCombat(object sender, CombatEventArgs combatArgs)
+	{
+		// Sanity check, sender must be a BaseFighter
+		if (!(sender is BaseFighter)) 
+		{
+			// Ignore
+			return;
+		}
+
+		// It is! Add this to our battle list
+		NewBattle((sender as BaseFighter), combatArgs.Opponent);
+	}
+
+
+	// Helper Methods
+	/// <summary>
+	/// Finds the next battle to be fought
+	/// </summary>
+	private void FindNextBattle()
+	{
+		// Sanity check, there only a next battle if there are battles
+		if (curFights.Count == 0) 
+		{
+			return;
+		}
+			
+		Battle tempy = curFights[0];
+
+		foreach (Battle other in curFights) 
+		{
+			if (tempy.NextFight > other.NextFight) 
+			{
+				tempy = other;
+			}
+		}
+
+		nextFightTime = tempy.NextFight;
+		nextBattle = tempy;
+	}
+
 	/// <summary>
 	/// Adds a new Battle to the list, if it hasn't already been added
 	/// </summary>
 	/// <param name="BF1">One fighter in this Battle</param>
 	/// <param name="BF2">The other fighter in this Battle</param>
-	public void NewBattle(BaseFighter BF1, BaseFighter BF2)
+	private void NewBattle(BaseFighter BF1, BaseFighter BF2)
 	{
 		// First, a fighter can only be in one battle
 		foreach (Battle tempBatt in curFights)
@@ -74,27 +152,8 @@ public class CombatManager : MonoBehaviour
 
 		// This is a new battle
 		curFights.Add(new Battle(BF1, BF2));
-	}
-
-
-	// Helper Methods
-	/// <summary>
-	/// Finds the next battle to be fought
-	/// </summary>
-	private void FindNextBattle()
-	{
-		Battle tempy = curFights[0];
-
-		foreach (Battle other in curFights) 
-		{
-			if (tempy.NextFight > other.NextFight) 
-			{
-				tempy = other;
-			}
-		}
-
-		nextFightTime = tempy.NextFight;
-		nextBattle = tempy;
+		// Update our fight timer
+		FindNextBattle();
 	}
 
 	/// <summary>
@@ -118,32 +177,29 @@ public class CombatManager : MonoBehaviour
 
 		// Fields
 		/// <summary>
-		/// Who attacks next
+		/// True if Fighter1 is next, false if Fighter2 is next
 		/// </summary>
-		private enum nextAttacker
-		{
-			Fighter1,
-			Fighter2
-		}
-		private nextAttacker next;
+		private bool isFighter1Next;
 		/// <summary>
-		/// When Fighter1 attacks again
+		/// How long between attack turns
 		/// </summary>
-		private float nextFight1;
-		/// <summary>
-		/// When Fighter2 attacks again
-		/// </summary>
-		private float nextFight2;
+		private float turnTime;
 
 
 		// Constructors
-		public Battle (BaseFighter f1, BaseFighter f2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="CombatManager+Battle"/> class.
+		/// </summary>
+		/// <param name="f1">One BaseFighter</param>
+		/// <param name="f2">The other BaseFighter</param>
+		/// <param name="turnTime">How long between attacks, default 0.5 seconds</param>
+		public Battle (BaseFighter f1, BaseFighter f2, float turnLength = 0.5f)
 		{
 			if (GetInitiative(f1, f2) == 1)
 			{
 				// f1 is Figher1
 				Fighter1 = f1;
-				Fighter2 = f1;
+				Fighter2 = f2;
 			}
 			else 
 			{
@@ -153,16 +209,16 @@ public class CombatManager : MonoBehaviour
 			}
 
 			// Fighter1 fights next
-			next = nextAttacker.Fighter1;
+			isFighter1Next = true;
 
 			// Set nextFight to the current time
-			nextFight1 = Time.time;
-			nextFight2 = Time.time;
+			turnTime = turnLength;
+			NextFight = Time.time + turnTime;
 		}
 
 		// Methods
 		/// <summary>
-		/// Checks if either Fighter is fight
+		/// Checks if either BaseFighter fight is in this battle
 		/// </summary>
 		/// <param name="fight">Fight.</param>
 		/// <returns>True if fight is one of the two fighters</returns>
@@ -178,7 +234,8 @@ public class CombatManager : MonoBehaviour
 		{
 			// Find out who's fighting
 			BaseFighter attacker, target;
-			if (next == nextAttacker.Fighter1) {
+			if (isFighter1Next) 
+			{
 				attacker = Fighter1;
 				target = Fighter2;
 			} 
@@ -250,27 +307,11 @@ public class CombatManager : MonoBehaviour
 
 		private void GetNextfight()
 		{
-			// nextAttacker just attacked, add their AttackSpd to their timer
-			if (next == nextAttacker.Fighter1) {
-				nextFight1 += Fighter1.AttackSpd;
-			}
-			else if (next == nextAttacker.Fighter2)
-			{
-				nextFight2 += Fighter2.AttackSpd;
-			}
 
-			// The next one to attack has the shorter time
-			if (nextFight1 < nextFight2) {
-				// Fighter1 fights next
-				NextFight = nextFight1;
-				next = nextAttacker.Fighter1;
-			} 
-			else 
-			{
-				// Fighter2 fights next
-				NextFight = nextFight2;
-				next = nextAttacker.Fighter2;
-			}
+			// Negate isFighter1Next to switch to the other fighter's turn
+			isFighter1Next = !isFighter1Next;
+
+			NextFight = Time.time + turnTime;
 		}
 	}
 }

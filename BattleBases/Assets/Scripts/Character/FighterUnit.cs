@@ -21,8 +21,53 @@ public class FighterUnit : BaseFighter
 		// Note: If we do animations, we need to factor that in here somehow...
 		AttackSpd = Speed;
 
+		// Find out which tag is our enemies
+		enemyTag = (tag == "Blue") ? "Red" : "Blue";
+
 		// We always start alive
-		IsDead = true;
+		IsDead = false;
+	}
+
+	/// <summary>
+	/// Fired when we're involved in a TriggerEnter event
+	/// </summary>
+	void OnTriggerEnter(Collider other)
+	{
+		// If this is us entering a Trigger
+		if (other.isTrigger) 
+		{
+			// Do this stuff
+			// for now, just ignore the event
+			return;
+		}
+
+		BaseFighter othBF = other.GetComponent<BaseFighter> ();
+
+		if ( othBF == null) 
+		{
+			// If we can't find a BaseFighter component, we can't fight this thing
+			// Ignore
+			return;
+		}
+
+		// We're here if something entered our trigger collider and we can fight it!
+		if (other.tag == enemyTag) 
+		{
+			// We found an enemy!
+			OnEnemyDetected(othBF);
+		}
+	}
+
+	// Helper functions
+	/// <summary>
+	/// Raises the death event.
+	/// </summary>
+	protected void OnDeath()
+	{
+		// We've been defeated!
+
+		// For now, just destroy the GameObject
+		Destroy(gameObject);
 	}
 
 	// Implementation of BaseFighter
@@ -30,12 +75,14 @@ public class FighterUnit : BaseFighter
 	{
 		base.OnAttacked (other);
 
-		// If this killed us, Send a OnDeath message
-		// we don't care if anyone hears this
-		if (IsDead) 
-		{
-			gameObject.SendMessage ("OnDeath", null, SendMessageOptions.DontRequireReceiver);
-		}
+		// Add class specific code here
+	}
+
+	protected override void TookDamage (int dam)
+	{
+		base.TookDamage (dam);
+
+		// Add class specific code here
 	}
 }
 

@@ -62,6 +62,7 @@ public abstract class BaseFighter : MonoBehaviour
 	/// <value><c>true</c> If this instance is dead; otherwise, <c>false</c>.</value>
 	public bool IsDead { get; protected set; }
 
+
 	// Base Fields
 	/// <summary>
 	/// Field behind for Health property
@@ -75,6 +76,31 @@ public abstract class BaseFighter : MonoBehaviour
 	/// Field behind for AttackSpd propery
 	/// </summary>
 	private float attackSpd;
+
+	// Fields to be accessed by descendants
+	/// <summary>
+	/// The tag of our enemies!
+	/// </summary>
+	protected string enemyTag;
+
+	// Events
+	/// <summary>
+	/// Fired on CambatEvents, as defined in subclasses
+	/// </summary>
+	public event CombatEventHandler CombatEvent;
+
+	/// <summary>
+	/// Raises a combat event for when an enemy is detected
+	/// </summary>
+	/// <param name="enemy">Enemy.</param>
+	protected virtual void OnEnemyDetected(BaseFighter enemy)
+	{
+		CombatEventHandler hand = CombatEvent;
+		if (hand != null) 
+		{
+			hand(this, new CombatEventArgs(enemy));
+		}
+	}
 
 	// Base Messages
 	// These are the messages that this type handles
@@ -96,7 +122,7 @@ public abstract class BaseFighter : MonoBehaviour
 
 	// Base Helper Methods
 	/// <summary>
-	/// Resolves OnAttacked messages
+	/// We've been hit!
 	/// </summary>
 	/// <param name="dam">How strong the attack was</param>
 	protected virtual void TookDamage(int dam)

@@ -129,6 +129,15 @@ public class UnitMovement : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// Raised when we have won a battle
+	/// </summary>
+	public void OnVictory()
+	{
+		// If we defeated our foe, we can walk again
+		StartWalking();
+	}
+
 	// Helper functions
 	/// <summary>
 	/// Moves unit forward, using interpolation
