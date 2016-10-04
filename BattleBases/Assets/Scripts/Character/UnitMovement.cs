@@ -57,6 +57,9 @@ public class UnitMovement : MonoBehaviour
 	/// </summary>
 	public bool IsWalking { get; private set; }
 
+	// Events
+	public event CombatEventHandler DeathEvent;
+
 
 	// Initialization
 	void Awake()
@@ -110,6 +113,13 @@ public class UnitMovement : MonoBehaviour
 		{
 			// Something is in our collider, don't walk
 			canWalk = false;
+
+			// If this is a friendly unit, listen fo death events
+			UnitMovement otherUM = other.GetComponent<UnitMovement>();
+			if (otherUM != null && otherUM.enemyTag == enemyTag)
+			{
+				otherUM.DeathEvent += FriendDeath;
+			}
 		} 
 
 		// If we entered someone else trigger, don't do anything
@@ -135,6 +145,31 @@ public class UnitMovement : MonoBehaviour
 	public void OnVictory()
 	{
 		// If we defeated our foe, we can walk again
+		StartWalking();
+	}
+
+	/// <summary>
+	/// Fired when this unit dies
+	/// </summary>
+	/// <param name="obj">Object.</param>
+	public void OnDeath()
+	{
+		// Broadcast this message to anyone listening
+		CombatEventHandler hand = DeathEvent;
+		if (hand != null)
+		{
+			hand (this, new CombatEventArgs (null));
+		}
+	}
+
+	/// <summary>
+	/// Listens for an allied unit death
+	/// </summary>
+	/// <param name="sender">Sender.</param>
+	/// <param name="combatArgs">Combat arguments.</param>
+	public void FriendDeath(object sender, CombatEventArgs combatArgs)
+	{
+		// We can walk again
 		StartWalking();
 	}
 

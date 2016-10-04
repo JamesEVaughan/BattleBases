@@ -75,14 +75,14 @@ public class FighterUnit : BaseFighter
 	{
 		base.OnAttacked (other);
 
-		// Add class specific code here
+		// Add FighterUnit specific code here
 	}
 
 	protected override void TookDamage (int dam)
 	{
 		base.TookDamage (dam);
 
-		// Add class specific code here
+		// Add UnitFighter specific code here
 	}
 }
 
