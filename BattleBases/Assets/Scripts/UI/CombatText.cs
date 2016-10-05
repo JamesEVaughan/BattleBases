@@ -111,8 +111,9 @@ public class CombatText : MonoBehaviour
 
 		// Instantiate a new DamageText with attack
 		GameObject newDamText = Instantiate(DTPreFab) as GameObject;
-		newDamText.transform.SetParent (FindObjectOfType<Canvas> ().transform, false);
-		DamageText newText = (newDamText as GameObject).GetComponent<DamageText> ();
+		Canvas can = FindObjectOfType<Canvas> ();
+		newDamText.transform.SetParent (can.transform, false);
+		DamageText newText = newDamText.GetComponent<DamageText> ();
 
 		newText.Damage = attack; // Set Damage
 		newText.ChangePosition(gameObject);

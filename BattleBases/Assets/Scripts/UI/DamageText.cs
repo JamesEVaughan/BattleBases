@@ -52,7 +52,7 @@ public class DamageText : MonoBehaviour
 	/// </summary>
 	private Vector2 endPoint;
 	/// <summary>
-	/// True once the
+	/// True once the text has been displayed for screenTime
 	/// </summary>
 	private bool isDone;
 
@@ -84,9 +84,7 @@ public class DamageText : MonoBehaviour
 			timer = screenTime;
 		}
 		// Movement is handled by lerping the anchor
-		RectTransform tempRect = gameObject.GetComponent<RectTransform> ();
-
-		tempRect.anchoredPosition = Vector2.Lerp (startPoint, endPoint, timer / screenTime);
+		damText.rectTransform.anchoredPosition = Vector2.Lerp (startPoint, endPoint, timer / screenTime);
 
 		if (timer == screenTime)
 		{
@@ -102,14 +100,14 @@ public class DamageText : MonoBehaviour
 	public void ChangePosition (GameObject target)
 	{
 		// Get the screen position of the target
-		Camera[] cam = FindObjectsOfType<Camera>();
-		Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam[0], target.transform.position);
+		Camera cam = FindObjectOfType<Camera>();
+		Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, target.transform.position);
 
 		// Get the  two points for our lerp action
-		startPoint = screenPos;
+		startPoint = screenPos - damText.rectTransform.sizeDelta/2;
 		endPoint = startPoint + (Vector2.up * 10);
 
-		GetComponent<RectTransform> ().anchoredPosition = startPoint;
+		damText.rectTransform.anchoredPosition = startPoint;
 
 		// Reset our timer
 		timer = 0f;
@@ -121,7 +119,7 @@ public class DamageText : MonoBehaviour
 	/// </summary>
 	private void OnDamageChange()
 	{
-		damText.text = damage.ToString();
+		damText.text = "-" + damage.ToString();
 	}
 }
 
