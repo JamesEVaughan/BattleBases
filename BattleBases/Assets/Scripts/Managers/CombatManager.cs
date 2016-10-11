@@ -22,7 +22,7 @@ public class CombatManager : MonoBehaviour
 	/// </summary>
 	private Battle nextBattle;
 
-	void Awake ()
+	void Start ()
 	{
 		// Initiatize our list
 		curFights = new List<Battle>(10);
