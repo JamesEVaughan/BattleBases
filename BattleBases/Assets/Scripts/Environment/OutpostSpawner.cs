@@ -27,6 +27,7 @@ public class OutpostSpawner : MonoBehaviour, IClickable
 	private GameObject spawnPoint;
 
 	// Events
+	public event SpawnEventHandler SpawnEvent;
 
 	// Unity methods
 	// Use this for initialization
@@ -62,23 +63,24 @@ public class OutpostSpawner : MonoBehaviour, IClickable
 	/// Spawns a new unit, based on the assigned prefab
 	/// </summary>
 	/// <returns>A reference to a newly spawned unit</returns>
-	public GameObject SpawnUnit()
+	public void SpawnUnit()
 	{
 		// First, make sure that the spawn area is clear of any units
 		if (!IsSpawnAreaClear ())
 		{
 			// Don't spawn anything
-			return null;
+			return;
 		}
 
 		// Spawn in the new unit
 		GameObject spawnedUnit = (Instantiate (UnitPrefab, spawnPoint.transform.position, 
 			                         spawnPoint.transform.rotation) as GameObject);
 
-
-
-		// Finally, return a reference of the newly spawned unit
-		return spawnedUnit;
+		// If we've successfully spawned a unit, raise the event
+		if (spawnedUnit != null)
+		{
+			OnSpawn (spawnedUnit);
+		}
 	}
 
 	// Helper methods
@@ -114,13 +116,23 @@ public class OutpostSpawner : MonoBehaviour, IClickable
 		return true;
 	}
 
+	/// <summary>
+	/// Raises the spawn event.
+	/// </summary>
+	private void OnSpawn(GameObject newUnit)
+	{
+		SpawnEventHandler hand = SpawnEvent;
+		if (hand != null)
+		{
+			hand (this, new SpawnEventArgs (newUnit));
+		}
+	}
+
 	// IClickable implementation
 	public void Clicked()
 	{
 		// If we've been clicked on, we should spawn a unit
-		GameObject tempUnit = SpawnUnit();
-
-		// And pass it along to someone
+		SpawnUnit();
 	}
 }
 

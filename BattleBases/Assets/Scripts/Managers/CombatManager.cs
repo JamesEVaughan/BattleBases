@@ -28,6 +28,27 @@ public class CombatManager : MonoBehaviour
 		curFights = new List<Battle>(10);
 
 		nextFightTime = -1f;
+
+		// Subscribe to Outpost events
+		OutpostSpawner[] spawners = Object.FindObjectsOfType<OutpostSpawner>();
+		OutpostCombat tempCombat;
+
+		// And listen to their spawn events
+		foreach (OutpostSpawner temp in spawners)
+		{
+			temp.SpawnEvent += UnitSpawned;
+
+			tempCombat = temp.GetComponent<OutpostCombat> ();
+
+			// Each one should have one, so something bad happened if they don't
+			if (tempCombat != null)
+			{
+				// Subscribe to their combat events
+				tempCombat.CombatEvent += OnCombat;
+			}
+		}
+
+
 	}
 
 	// we keep time in Update
@@ -70,14 +91,12 @@ public class CombatManager : MonoBehaviour
 
 	// Events
 	/// <summary>
-	/// Listens for spawn events, not actually wired as a C# event due to single use
-	/// nature
+	/// Listens for spawn events
 	/// </summary>
-	/// <param name="newGO">A newly created GameObject</param>
-	public void OnSpawn(GameObject newGO)
+	public void UnitSpawned(object sender, SpawnEventArgs spawnArgs)
 	{
 		// We only care about GameObjects with BaseFighter components
-		BaseFighter newBF = newGO.GetComponent<BaseFighter>();
+		BaseFighter newBF = spawnArgs.UnitSpawned.GetComponent<BaseFighter>();
 		if (newBF == null) 
 		{
 			// It doesn't have a BaseFighter, ignore
@@ -95,15 +114,15 @@ public class CombatManager : MonoBehaviour
 	/// <param name="combatArgs">The event arguments</param>
 	public void OnCombat(object sender, CombatEventArgs combatArgs)
 	{
-		// Sanity check, sender must be a BaseFighter
-		if (!(sender is BaseFighter)) 
+		BaseFighter tempBF = sender as BaseFighter;
+		if (tempBF == null) 
 		{
 			// Ignore
 			return;
 		}
 
 		// It is! Add this to our battle list
-		NewBattle((sender as BaseFighter), combatArgs.Opponent);
+		NewBattle(tempBF, combatArgs.Opponent);
 	}
 
 
@@ -145,7 +164,7 @@ public class CombatManager : MonoBehaviour
 		{
 			if (tempBatt.Contains (BF1) || tempBatt.Contains (BF2)) 
 			{
-				// Do nothing
+				// Ignore it
 				return;
 			}
 		}
@@ -174,6 +193,14 @@ public class CombatManager : MonoBehaviour
 		/// When this battle fights again
 		/// </summary>
 		public float NextFight { get; private set; }
+		/// <summary>
+		/// Can this battle be interrupted by another fighter?
+		/// </summary>
+		public bool isInterruptable { get; private set; }
+		/// <summary>
+		/// Is this battle on hold?
+		/// </summary>
+		public bool isPaused { get; set; }
 
 		// Fields
 		/// <summary>
@@ -214,6 +241,17 @@ public class CombatManager : MonoBehaviour
 			// Set nextFight to the current time
 			turnTime = turnLength;
 			NextFight = Time.time + turnTime;
+
+			// Finally, a battle involving an Outpost can be paused
+			if (f1 is OutpostCombat || f2 is OutpostCombat)
+			{
+				isInterruptable = true;
+			}
+
+			else
+			{
+				isInterruptable = false;
+			}
 		}
 
 		// Methods

@@ -116,23 +116,11 @@ public abstract class BaseFighter : MonoBehaviour
 		// Only subclasses of BaseFighter can attack us
 		if (attacker != null) 
 		{
-			TookDamage (attacker.AttackStr);
-		}
-	}
+			// We've been hit!
+			Health -= attacker.AttackStr;
 
-	// Base Helper Methods
-	/// <summary>
-	/// We've been hit!
-	/// </summary>
-	/// <param name="dam">How strong the attack was</param>
-	protected virtual void TookDamage(int dam)
-	{
-		Health -= dam;
-
-		if (Health == 0) 
-		{
-			// We died
-			IsDead = true;
+			// If Health is 0, we are dead
+			IsDead = (Health == 0);
 		}
 	}
 }

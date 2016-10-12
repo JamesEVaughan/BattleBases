@@ -85,7 +85,7 @@ public class SpawnManager : MonoBehaviour {
 		if (tempObj is GameObject) 
 		{
 			// Tell the combat manager we spawned a new unit
-			combat.OnSpawn (tempObj as GameObject);
+			combat.UnitSpawned (this, new SpawnEventArgs(tempObj as GameObject));
 
 			SpawnTimer = Time.time + 1f;
 		}

@@ -36,8 +36,7 @@ public class FighterUnit : BaseFighter
 		// If this is us entering a Trigger
 		if (other.isTrigger) 
 		{
-			// Do this stuff
-			// for now, just ignore the event
+			// Ignore it
 			return;
 		}
 
@@ -76,13 +75,6 @@ public class FighterUnit : BaseFighter
 		base.OnAttacked (other);
 
 		// Add FighterUnit specific code here
-	}
-
-	protected override void TookDamage (int dam)
-	{
-		base.TookDamage (dam);
-
-		// Add UnitFighter specific code here
 	}
 }
 
