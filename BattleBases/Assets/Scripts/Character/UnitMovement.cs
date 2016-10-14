@@ -109,13 +109,13 @@ public class UnitMovement : MonoBehaviour
 	void OnTriggerEnter(Collider other)
 	{
 		// First, did we enter someone else's Trigger box?
-		if (!other.isTrigger) 
+		if (!other.isTrigger)
 		{
 			// Something is in our collider, don't walk
 			canWalk = false;
 
 			// If this is a friendly unit, listen fo death events
-			UnitMovement otherUM = other.GetComponent<UnitMovement>();
+			UnitMovement otherUM = other.GetComponent<UnitMovement> ();
 			if (otherUM != null && otherUM.enemyTag == enemyTag)
 			{
 				otherUM.DeathEvent += FriendDeath;
@@ -123,6 +123,19 @@ public class UnitMovement : MonoBehaviour
 		} 
 
 		// If we entered someone else trigger, don't do anything
+
+		// Special case, did we enter the trigger of an enemy outpost?
+		else if (other.CompareTag (enemyTag))
+		{
+			// Use the spawner to check if this is an outpost
+			OutpostSpawner tempOutpost = other.GetComponent<OutpostSpawner>();
+
+			if (tempOutpost != null)
+			{
+				// This is an enemy outpost, stop!
+				canWalk = false;
+			}
+		}
 	}
 
 	/// <summary>
@@ -158,7 +171,7 @@ public class UnitMovement : MonoBehaviour
 		CombatEventHandler hand = DeathEvent;
 		if (hand != null)
 		{
-			hand (this, new CombatEventArgs (null));
+			hand (this, CombatEventArgs.Death);
 		}
 	}
 

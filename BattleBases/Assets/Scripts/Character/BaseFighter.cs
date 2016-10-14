@@ -102,6 +102,19 @@ public abstract class BaseFighter : MonoBehaviour
 		}
 	}
 
+	/// <summary>
+	/// Raises a combat event for when this unit is defeated
+	/// </summary>
+	protected virtual void OnDefeat()
+	{
+		CombatEventHandler hand = CombatEvent;
+		if (hand != null)
+		{
+			// Fire the event using the special Death version
+			hand(this, CombatEventArgs.Death);
+		}
+	}
+
 	// Base Messages
 	// These are the messages that this type handles
 	/// <summary>

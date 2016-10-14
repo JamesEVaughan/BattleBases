@@ -55,7 +55,7 @@ public class InputManager : MonoBehaviour
 		// The mouse is inside the screen, do a RayTrace to see if we hit anything
 		RaycastHit tempHit;
 		if (Physics.Raycast (mainCam.ScreenPointToRay (mousePos), out tempHit, Mathf.Infinity, 
-			LayerMask.GetMask("RayCastTarget")))
+			LayerMask.GetMask("MouseTarget")))
 		{
 			// Let's see what we hit
 			// RayCastTarget gameobjects are always children of the real target

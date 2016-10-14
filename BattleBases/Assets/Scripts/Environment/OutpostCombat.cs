@@ -44,11 +44,16 @@ public class OutpostCombat : BaseFighter
 			{
 				// Raise a found enemy event
 				OnEnemyDetected(othBF);
-
-				// Tell it to stop
-
 			}
 		}
+	}
+
+	// Implementation of BaseFighter
+	public override void OnAttacked (object other)
+	{
+		base.OnAttacked (other);
+
+		// Add Outpost specific code here
 	}
 }
 
