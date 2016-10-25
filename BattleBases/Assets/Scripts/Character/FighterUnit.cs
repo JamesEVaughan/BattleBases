@@ -57,24 +57,27 @@ public class FighterUnit : BaseFighter
 		}
 	}
 
-	// Helper functions
-	/// <summary>
-	/// Raises the death event.
-	/// </summary>
-	protected void OnDeath()
-	{
-		// We've been defeated!
-
-		// For now, just destroy the GameObject
-		Destroy(gameObject);
-	}
-
 	// Implementation of BaseFighter
 	public override void OnAttacked (object other)
 	{
 		base.OnAttacked (other);
 
 		// Add FighterUnit specific code here
+	}
+
+	// BaseFighter events
+	protected override void OnEnemyDetected (BaseFighter enemy)
+	{
+		base.OnEnemyDetected (enemy);
+
+		// Unit FighterUnit specific code here
+	}
+
+	protected override void OnDeath ()
+	{
+		base.OnDeath ();
+
+		// Add fighter specific code here
 	}
 }
 

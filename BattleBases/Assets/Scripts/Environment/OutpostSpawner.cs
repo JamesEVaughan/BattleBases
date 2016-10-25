@@ -90,30 +90,20 @@ public class OutpostSpawner : MonoBehaviour, IClickable
 	/// <returns><c>true</c> if the spawn area is clear; otherwise, <c>false</c>.</returns>
 	private bool IsSpawnAreaClear()
 	{
-		// First, calculate our reference point from our spawn point
-		Vector3 refPoint = spawnPoint.transform.position;
+		// First, calculate our reference point from our spawn point and raise it
+		//    0.5 units up to get it off of the ground
+		Vector3 refPoint = spawnPoint.transform.position + (Vector3.up * 0.5f);
 
-		// Raise it 0.25 units to get it off the ground and push it back by 0.5 units
-		// We push it back so that the rayCast will hit the colliders of recently spawned units
-		refPoint += (Vector3.up * 0.25f) + (spawnPoint.transform.forward * -0.5f);
+		// Second, get the half extents of the spawn area
+		Vector3 refExtents = new Vector3(0.5f, 0.5f, 1.0f);
 
-		// Do a raycast and record all the hits we're out of the outpost
-		RaycastHit[] theHits = Physics.RaycastAll (refPoint, spawnPoint.transform.forward, 
-			1f + spawnBufferDist, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+		// Do a BoxCast to see if anything is in there
+		bool foundSomething = Physics.CheckBox(refPoint, refExtents, Quaternion.identity, 
+			LayerMask.GetMask("UnitTarget"));
 
-		// Cycle through and see if anything we hit prevents a spawn
-		foreach (RaycastHit tempHit in theHits)
-		{
-			// If we hit a rigidBody inside the outpost
-			if (tempHit.rigidbody != null && tempHit.distance < 1.0f)
-			{
-				// Spawn area is not clear
-				return false;
-			}
-		}
 
-		// If we didn't find anything, we're good to go!
-		return true;
+		// If we didn't find anything, the area is clear
+		return !foundSomething;
 	}
 
 	/// <summary>

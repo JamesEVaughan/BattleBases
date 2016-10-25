@@ -13,11 +13,16 @@ public class CombatManager : MonoBehaviour
 	/// A list of the current battles taking place.
 	/// </summary>
 	private List<Battle> curFights;
+	/// <summary>
+	/// A list of fights to be culled at the end of this update cycle
+	/// </summary>
+	private List<Battle> cullFights;
 
 	void Start ()
 	{
 		// Initiatize our list
 		curFights = new List<Battle>(10);
+		cullFights = new List<Battle> (10);
 
 		// Subscribe to Outpost events
 		OutpostSpawner[] spawners = Object.FindObjectsOfType<OutpostSpawner>();
@@ -57,6 +62,15 @@ public class CombatManager : MonoBehaviour
 		}
 	}
 
+	// Cull the fight list in LateUpdate
+	void LateUpdate()
+	{
+		if (cullFights.Count > 0)
+		{
+			CullFightList ();
+		}
+	}
+
 	// Methods
 
 	// Events
@@ -85,7 +99,7 @@ public class CombatManager : MonoBehaviour
 	public void CombatStart(object sender, CombatEventArgs combatArgs)
 	{
 		// We don't care about Death events
-		if (combatArgs == CombatEventArgs.Death)
+		if (combatArgs.Message == CombatEventArgs.CombatMsg.IsDefeated)
 		{
 			return;
 		}
@@ -115,17 +129,18 @@ public class CombatManager : MonoBehaviour
 		}
 
 		Battle comp = sender as Battle;
-		// Who won?
-		BaseFighter victor = (args.Opponent == comp.Fighter1) ? comp.Fighter2 : comp.Fighter1;
 
-		// Remove the Battle from curFights
-		curFights.Remove(comp);
+		// Add comp to the cull list
+		cullFights.Add(comp);
 
-		// Are they involved in any paused battles?
-		foreach (Battle temp in curFights.FindAll(x => x.Contains(victor)))
-		{
-			// Restart the battle
-		}
+		// Unsubscribe to the battle's BattleEvents
+		comp.BattleEvent -= BattleCompleted;
+
+		// Destroy the defeated fighter
+		Destroy(args.Opponent.gameObject);
+
+		// Because this battle is still in the list, we can't do victory checks.
+		// That'll be handled by CullFightList
 	}
 
 
@@ -210,6 +225,46 @@ public class CombatManager : MonoBehaviour
 			return false;
 		}
 
+	}
+
+	/// <summary>
+	/// Culls curFights based on the cullFights list
+	/// </summary>
+	private void CullFightList()
+	{
+		// Sanity check: cullFights can't be empty
+		if (cullFights.Count == 0)
+		{
+			return;
+		}
+
+		// Remove each Battle in cullFights from curFights
+		foreach (Battle culled in cullFights)
+		{
+			// Remove the completed Battle
+			curFights.Remove (culled);
+
+			// Who won this battle?
+			BaseFighter victor = (culled.Fighter1.IsDead) ? culled.Fighter2 : culled.Fighter1;
+
+			// Grab the first battle that the victor is involved in
+			Battle victorFighting = curFights.Find(x => x.Contains(victor));
+
+			// If there is a battle they're involved in
+			if (victorFighting != null)
+			{
+				// Restart it
+				victorFighting.IsPaused = false;
+			}
+			else
+			{
+				// Otherwise, they're done!
+				victor.gameObject.SendMessage("OnVictory");
+			}
+		}
+
+		// Reset cullFights
+		cullFights.Clear();
 	}
 }
 

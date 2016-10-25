@@ -165,13 +165,13 @@ public class UnitMovement : MonoBehaviour
 	/// Fired when this unit dies
 	/// </summary>
 	/// <param name="obj">Object.</param>
-	public void OnDeath()
+	public void OnDestroy()
 	{
 		// Broadcast this message to anyone listening
 		CombatEventHandler hand = DeathEvent;
 		if (hand != null)
 		{
-			hand (this, CombatEventArgs.Death);
+			hand (this, new CombatEventArgs(null, CombatEventArgs.CombatMsg.IsDefeated));
 		}
 	}
 

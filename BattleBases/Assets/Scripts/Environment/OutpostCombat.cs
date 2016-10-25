@@ -55,5 +55,19 @@ public class OutpostCombat : BaseFighter
 
 		// Add Outpost specific code here
 	}
+
+	protected override void OnDeath ()
+	{
+		base.OnDeath ();
+
+		// Add OutpostCombat specific code here
+	}
+
+	protected override void OnEnemyDetected (BaseFighter enemy)
+	{
+		base.OnEnemyDetected (enemy);
+
+		// Add OutpostCombat specific code here
+	}
 }
 

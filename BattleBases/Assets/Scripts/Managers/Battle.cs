@@ -7,11 +7,23 @@ public class Battle
 	/// <summary>
 	/// Reference to the first fighter
 	/// </summary>
-	public BaseFighter Fighter1 { get; private set; }
+	public BaseFighter Fighter1 
+	{ 
+		get
+		{ 
+			return fighter1;
+		}
+	}
 	/// <summary>
 	/// Reference to the second fighter
 	/// </summary>
-	public BaseFighter Fighter2 { get; private set; }
+	public BaseFighter Fighter2 
+	{
+		get
+		{
+			return fighter2;
+		}
+	}
 	/// <summary>
 	/// Flags this Battle as being on hold
 	/// </summary>
@@ -19,6 +31,14 @@ public class Battle
 	public bool IsPaused { get; set; }
 
 	// Fields
+	/// <summary>
+	/// Field behind the Fighter1 property
+	/// </summary>
+	private readonly BaseFighter fighter1;
+	/// <summary>
+	/// Field behind the Fighter2 property
+	/// </summary>
+	private readonly BaseFighter fighter2;
 	/// <summary>
 	/// How long Fighter1 has been resting since their last attack
 	/// </summary>
@@ -45,8 +65,8 @@ public class Battle
 	private Battle (BaseFighter f1, BaseFighter f2)
 	{
 		// First, set up the fighters
-		Fighter1 = f1;
-		Fighter2 = f2;
+		fighter1 = f1;
+		fighter2 = f2;
 	}
 
 	// Factory methods
@@ -298,7 +318,7 @@ public class Battle
 
 		if (hand != null)
 		{
-			hand(this, new CombatEventArgs(defeatedFight, CombatEventArgs.CombatMsg.BattleComplete)
+			hand(this, new CombatEventArgs(defeatedFight, CombatEventArgs.CombatMsg.BattleComplete));
 		}
 	}
 }

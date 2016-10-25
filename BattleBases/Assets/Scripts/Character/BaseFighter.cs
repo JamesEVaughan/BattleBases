@@ -105,13 +105,13 @@ public abstract class BaseFighter : MonoBehaviour
 	/// <summary>
 	/// Raises a combat event for when this unit is defeated
 	/// </summary>
-	protected virtual void OnDefeat()
+	protected virtual void OnDeath()
 	{
 		CombatEventHandler hand = CombatEvent;
 		if (hand != null)
 		{
 			// Fire the event using the special Death version
-			hand(this, CombatEventArgs.Death);
+			hand(this, new CombatEventArgs(null, CombatEventArgs.CombatMsg.IsDefeated));
 		}
 	}
 
@@ -134,6 +134,12 @@ public abstract class BaseFighter : MonoBehaviour
 
 			// If Health is 0, we are dead
 			IsDead = (Health == 0);
+
+			// Lastly, send the OnDeath message to this gameObject
+			if (IsDead)
+			{
+				SendMessage ("OnDeath");
+			}
 		}
 	}
 }
