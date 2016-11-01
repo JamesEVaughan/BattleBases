@@ -100,7 +100,7 @@ public class DamageText : MonoBehaviour
 	public void ChangePosition (GameObject target)
 	{
 		// Get the screen position of the target
-		Camera cam = FindObjectOfType<Camera>();
+		Camera cam = Camera.main;
 		Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, target.transform.position);
 
 		// Get the  two points for our lerp action
