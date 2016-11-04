@@ -26,10 +26,6 @@ public class SpawnManager : MonoBehaviour {
 	public float SpawnTimer = 0f;
 
 	// Fields
-	/// <summary>
-	/// A reference to our active combat manager
-	/// </summary>
-	private CombatManager combat;
 
 	// Enums
 	/// <summary>
@@ -44,8 +40,7 @@ public class SpawnManager : MonoBehaviour {
 	// Methods
 	void Awake()
 	{
-		// Grab our CombatManger
-		combat = GetComponent<CombatManager>();
+		
 	}
 
 	void Update()
@@ -84,8 +79,6 @@ public class SpawnManager : MonoBehaviour {
 		// Only do changes if we spawned something
 		if (tempObj is GameObject) 
 		{
-			// Tell the combat manager we spawned a new unit
-			combat.UnitSpawned (this, new SpawnEventArgs(tempObj as GameObject));
 
 			SpawnTimer = Time.time + 1f;
 		}

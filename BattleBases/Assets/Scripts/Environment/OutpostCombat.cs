@@ -8,22 +8,11 @@ using System.Collections;
 /// </summary>
 public class OutpostCombat : BaseFighter
 {
-	// Accessible in Unity
-	public int HP = 300;
-
 	// Unity methods
 	public void Awake()
 	{
-		// Set the base class properties
-		Health = HP;
-		IsDead = false;	// We start alive
-
-		// We can't attack, set those values to zero
-		AttackSpd = 0f;
-		AttackStr = 0;
-
-		// Find out our enemies tag
-		enemyTag = (tag == "Blue") ? "Red" : "Blue";
+		// Call BaseFighter's initializer
+		Init ();
 	}
 
 	public void OnTriggerEnter(Collider other)
@@ -63,11 +52,25 @@ public class OutpostCombat : BaseFighter
 		// Add OutpostCombat specific code here
 	}
 
-	protected override void OnEnemyDetected (BaseFighter enemy)
+	protected override void OnEnemyDetected (BaseFighter other)
 	{
-		base.OnEnemyDetected (enemy);
+		base.OnEnemyDetected (other);
 
 		// Add OutpostCombat specific code here
+	}
+
+	protected override void Attack ()
+	{
+		// We can't attack
+		//base.Attack ();
+	}
+
+	public override BaseFighter Target {
+		get 
+		{
+			// We can't attack, just pass a null
+			return null;
+		}
 	}
 }
 

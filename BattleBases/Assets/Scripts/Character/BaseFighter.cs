@@ -21,6 +21,9 @@ public abstract class BaseFighter : MonoBehaviour
 		{
 			// Health can only be set to positive values
 			health = (value > 0) ? value : 0;
+
+			// Are we dead?
+			IsDead = (health <= 0);
 		}
 	}
 
@@ -62,19 +65,28 @@ public abstract class BaseFighter : MonoBehaviour
 	/// <value><c>true</c> If this instance is dead; otherwise, <c>false</c>.</value>
 	public bool IsDead { get; protected set; }
 
+	/// <summary>
+	/// Abstract property. Returns a reference to the current target of the BaseFighter
+	/// </summary>
+	/// <value>The target. Null indicates no target.</value>
+	public abstract BaseFighter Target { get; }
+
 
 	// Base Fields
 	/// <summary>
 	/// Field behind for Health property
 	/// </summary>
+	[SerializeField]
 	private int health;
 	/// <summary>
 	/// Field behind for AttackStr property
 	/// </summary>
+	[SerializeField]
 	private int attackStr;
 	/// <summary>
 	/// Field behind for AttackSpd propery
 	/// </summary>
+	[SerializeField]
 	private float attackSpd;
 
 	// Fields to be accessed by descendants
@@ -82,6 +94,11 @@ public abstract class BaseFighter : MonoBehaviour
 	/// The tag of our enemies!
 	/// </summary>
 	protected string enemyTag;
+
+	/// <summary>
+	/// Tells us when we can attack again.
+	/// </summary>
+	protected float attackTimer;
 
 	// Events
 	/// <summary>
@@ -113,33 +130,74 @@ public abstract class BaseFighter : MonoBehaviour
 			// Fire the event using the special Death version
 			hand(this, new CombatEventArgs(null, CombatEventArgs.CombatMsg.IsDefeated));
 		}
+
+		// Finally, flag this GameObject for deletion
+		Destroy(this.gameObject);
 	}
 
 	// Base Messages
 	// These are the messages that this type handles
 	/// <summary>
-	/// OnAttacked method, called when this GameObject was attacked
+	/// OnAttacked method, called when this GameObject is attacked
 	/// </summary>
-	/// <param name="other">The GameObject that attacked us</param>
+	/// <param name="other">The BaseFighter that attacked us</param>
 	public virtual void OnAttacked(object other)
 	{
-		// First, find the BaseFighter component
-		BaseFighter attacker = (other as GameObject).GetComponent<BaseFighter> ();
+		BaseFighter attacker = other as BaseFighter;
 
-		// Only subclasses of BaseFighter can attack us
-		if (attacker != null) 
+		// Only BaseFighters can attack us
+		if (attacker == null)
 		{
-			// We've been hit!
-			Health -= attacker.AttackStr;
-
-			// If Health is 0, we are dead
-			IsDead = (Health == 0);
-
-			// Lastly, send the OnDeath message to this gameObject
-			if (IsDead)
-			{
-				SendMessage ("OnDeath");
-			}
+			// Ignore
+			return;
 		}
+
+		// We've been hit!
+		Health -= attacker.AttackStr;
+
+		// Send the OnDeath message to this gameObject
+		if (IsDead)
+		{
+			SendMessage ("OnDeath");
+		}
+	}
+
+	// Base Helper methods
+	/// <summary>
+	/// Sanity checks values and performs final initialization
+	/// </summary>
+	protected void Init()
+	{
+		// Sanity check: make sure our properties have good values
+		AttackSpd = AttackSpd;
+		AttackStr = AttackStr;
+		Health = Health;
+
+		// Find the tag of our enemies!
+		enemyTag = (gameObject.tag == "Blue") ? "Red" : "Blue";
+
+		// We start out alive
+		IsDead = false;
+
+		// Flag attackTimer to show that we can attack ASAP
+		attackTimer = -1.0f;
+	}
+
+	/// <summary>
+	/// Attacks our target. 
+	/// </summary>
+	protected virtual void Attack()
+	{
+		// Sanity check: we can only attack a valid target
+		if (Target == null)
+		{
+			// Ignore
+			return;
+		}
+
+		Target.gameObject.SendMessage ("OnAttacked", this);
+
+		// Reset the attackTimer
+		attackTimer = 0.0f;
 	}
 }

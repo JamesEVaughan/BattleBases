@@ -6,26 +6,45 @@ using System.Collections;
 /// </summary>
 public class FighterUnit : BaseFighter
 {
-	// Fields to edit in Unity
-	public int HP = 100;
-	public int Strength = 10;
-	public float Speed = 0.5f;
+	// Fields
+	/// <summary>
+	/// Our currently detected target. Null if we don't have one
+	/// </summary>
+	private BaseFighter target;
 
 	// Methods
 	public void Awake()
 	{
-		// Set the properties according to the Unity setup
-		Health = HP;
-		AttackStr = Strength;
+		// Call BaseFighter's initializer
+		Init ();
 
-		// Note: If we do animations, we need to factor that in here somehow...
-		AttackSpd = Speed;
+		// Flag to show that there isn't an active target
+		target = null;
+		attackTimer = -1.0f;
+	}
 
-		// Find out which tag is our enemies
-		enemyTag = (tag == "Blue") ? "Red" : "Blue";
+	public void Update()
+	{
+		// First, have we found anything?
+		if (attackTimer < 0.0f)
+		{
+			// Ignore
+			return;
+		}
 
-		// We always start alive
-		IsDead = false;
+		// Increment our timer
+		attackTimer += Time.deltaTime;
+
+		// Can we attack again?
+		if (attackTimer >= AttackSpd && target != null)
+		{
+			// Do we have a target?
+			if (target != null)
+			{
+				// Attack!
+				Attack();
+			}
+		}
 	}
 
 	/// <summary>
@@ -33,13 +52,6 @@ public class FighterUnit : BaseFighter
 	/// </summary>
 	void OnTriggerEnter(Collider other)
 	{
-		// If this is us entering a Trigger
-		if (other.isTrigger) 
-		{
-			// Ignore it
-			return;
-		}
-
 		BaseFighter othBF = other.GetComponent<BaseFighter> ();
 
 		if ( othBF == null) 
@@ -57,6 +69,34 @@ public class FighterUnit : BaseFighter
 		}
 	}
 
+	// Events
+	/// <summary>
+	/// Listens for combat events, specifically when the target dies
+	/// </summary>
+	/// <param name="sender">Sender.</param>
+	/// <param name="args">Arguments.</param>
+	public void TargetDefeated(object sender, CombatEventArgs args)
+	{
+		// Sanity check: sender should be our target
+		if ((sender as BaseFighter) != target)
+		{
+			// Ignore
+			return;
+		}
+		// We only care about death events
+		if (args.Message != CombatEventArgs.CombatMsg.IsDefeated)
+		{
+			// Ignore it
+			return;
+		}
+
+		// First, unsubscribe from their events
+		target.CombatEvent -= TargetDefeated;
+
+		// Remove the reference
+		target = null;
+	}
+
 	// Implementation of BaseFighter
 	public override void OnAttacked (object other)
 	{
@@ -71,6 +111,15 @@ public class FighterUnit : BaseFighter
 		base.OnEnemyDetected (enemy);
 
 		// Unit FighterUnit specific code here
+
+		// Set this as our current target
+		target = enemy;
+
+		// Flag the timer so that we attack ASAP
+		attackTimer = AttackSpd+1.0f;
+
+		// Finally, subscribe to their CombatEvents
+		enemy.CombatEvent += TargetDefeated;
 	}
 
 	protected override void OnDeath ()
@@ -78,6 +127,18 @@ public class FighterUnit : BaseFighter
 		base.OnDeath ();
 
 		// Add fighter specific code here
+	}
+
+	public override BaseFighter Target {
+		get 
+		{
+			return target;
+		}
+	}
+
+	protected override void Attack ()
+	{
+		base.Attack ();
 	}
 }
 

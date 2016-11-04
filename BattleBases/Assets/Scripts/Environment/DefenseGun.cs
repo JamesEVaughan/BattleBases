@@ -8,46 +8,32 @@ using System.Collections.Generic;
 /// </summary>
 public class DefenseGun : BaseFighter
 {
-	// Accessible in Unity Editor
-	public int Strength = 5;
-	public float Speed = 0.25f;
-
 	// Fields
 	/// <summary>
 	/// A list of the targets for the gun that have been discovered
 	/// </summary>
 	private List<BaseFighter> targets;
+
 	/// <summary>
-	/// A list of targets that are to be culled from the list at the end of this Update loop
+	/// This is a reference to our current target, null if there isn't one
 	/// </summary>
-	private List<BaseFighter> cullTargets;
-	/// <summary>
-	/// Tells us when we can attack again.
-	/// </summary>
-	private float attackTimer;
+	private BaseFighter curTarget;
 
 	// Unity Methods
 	// Use this for initialization
 	void Start ()
 	{
-		// Setup based on the values given to us by in the Editor
-		AttackStr = Strength;
-		AttackSpd = Speed;
+		// Call BaseFighter's initializer
+		Init ();
 
-		// Set Health to 10 to make everything else work
-		Health = 10;
-
-		// Snag the tag of our enemies
-		enemyTag = (tag == "Blue") ? "Red" : "Blue";
-
-		// We start alive
-		IsDead = false;
-
-		// A size of 10 should be a good place to start for the targets List
+		// A size of 10 should be a good place to start for our lists
 		targets = new List<BaseFighter>(10);
 
 		// Flag the timer to show that we haven't found a unit yet.
 		attackTimer = -1.0f;
+
+		// Flag curTarget to null
+		curTarget = null;
 	}
 	
 	// Update is called once per frame
@@ -64,49 +50,16 @@ public class DefenseGun : BaseFighter
 		attackTimer += Time.deltaTime;
 
 		// Can we attack and is there a target?
-		if (attackTimer >= AttackSpd && targets.Count > 0)
+		if (attackTimer >= AttackSpd && curTarget != null)
 		{
-			// This will be our eventual target
-			BaseFighter targetBF = null;
 
-			// Our list may need to be culled, see if cullTargets has anything
-			if (cullTargets.Count > 0)
-			{
-				foreach (BaseFighter tempBF in targets)
-				{
-					// Grab the first one that isn't in cullTargets
-					if (!cullTargets.Contains (tempBF))
-					{
-						targetBF = tempBF;
-
-						// Found it, exit
-						break;
-					}
-				}
-			}
-			else
-			{
-				// If it's empty, grab the first BaseFighter in targets
-				targetBF = targets[0];
-			}
-
-			// Send the attack message only if we found something
-			if (targetBF != null)
-			{
-				targetBF.OnAttacked (this);
-
-				// Only reset the timer if we successfully attacked
-				attackTimer = 0.0f;
-			}
+			Attack ();
 		}
-	}
-
-	void LateUpdate()
-	{
-		// Call CullTargetList only if we need to
-		if (cullTargets.Count > 0)
+		// Can we attack but there aren't any targets?
+		else if (attackTimer >= AttackSpd && curTarget == null)
 		{
-			CullTargetsList ();
+			// Flag timer to -1 to avoid unnecessary checks
+			attackTimer = -1.0f;
 		}
 	}
 
@@ -153,32 +106,58 @@ public class DefenseGun : BaseFighter
 		// Unsubscribe so we don't hear from them again
 		senderBF.CombatEvent -= TargetDefeated;
 
-		// Sanity check: is this a in targets?
-		if (!targets.Contains (senderBF))
-		{
-			// Odd, but whatever, we're done
-			return;
-		}
+		// Remove them from our target list
+		targets.Remove(senderBF);
 
-		// Add them to the cullTargets to be removed later
-		cullTargets.Add(senderBF);
+		// If this was our current target
+		if (curTarget == senderBF)
+		{
+			// We've got to find a new one
+			FindCurrentTarget ();
+		}
 	}
 
 	// Helper methods
 	/// <summary>
-	/// Culls targets based on cullTargets
+	/// Sets curTargetIndex to the correct target
 	/// </summary>
-	protected void CullTargetsList()
+	private void FindCurrentTarget()
 	{
-		// Loop through cullTargets...
-		foreach (BaseFighter tempBF in cullTargets)
+		// Sanity check, is our current target alive?
+		if (curTarget != null && !curTarget.IsDead)
 		{
-			// Remove them from targets
-			targets.Remove(tempBF);
+			// Whoops, we're good
+			return;
 		}
 
-		// Reset cullTargets
-		cullTargets.Clear();
+		// Safety catch: set curTarget to null
+		curTarget = null;
+
+		// Trivial cases:
+		switch (targets.Count)
+		{
+		// targets is empty
+		case 0:
+			// No change
+			return;
+
+		// There is only one object in targets
+		case 1:
+			// Make sure it's alive
+			curTarget = (targets[0].IsDead) ? null : targets[0];
+			return;
+		}
+
+		// If we have more than that, loop through targets
+		foreach (BaseFighter temp in targets)
+		{
+			if (!temp.IsDead)
+			{
+				// If it's alive, we've found it
+				curTarget = temp;
+				return;
+			}
+		}
 	}
 
 	// Implementation of BaseFighter
@@ -202,6 +181,9 @@ public class DefenseGun : BaseFighter
 		// First things first, add this enemy to the list
 		targets.Add(enemy);
 
+		// See if we need to update our current target
+		FindCurrentTarget();
+
 		// Subscribe to their combat events
 		enemy.CombatEvent += TargetDefeated;
 
@@ -210,6 +192,19 @@ public class DefenseGun : BaseFighter
 		{
 			// Set attackTimer to go now
 			attackTimer = AttackSpd + 1.0f;
+		}
+	}
+
+	protected override void Attack ()
+	{
+		base.Attack ();
+	}
+
+	public override BaseFighter Target {
+		get 
+		{
+			// Pass the value of curTarget
+			return curTarget;
 		}
 	}
 }

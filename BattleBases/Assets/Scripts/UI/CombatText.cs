@@ -91,16 +91,16 @@ public class CombatText : MonoBehaviour
 	}
 
 	// Message methods
+	/// <summary>
+	/// Handles the OnAttacked message
+	/// </summary>
+	/// <param name="attacker">The BaseFighter that attacked this GameObject</param>
 	void OnAttacked(object attacker)
 	{
-		// Sanity check: Attacker should be a GameObject
-		if (!(attacker is GameObject))
-		{
-			return;
-		}
+		// Make attacker a BaseFighter reference
+		BaseFighter attackerBF = attacker as BaseFighter;
 
-		BaseFighter attackerBF = (attacker as GameObject).GetComponent<BaseFighter> ();
-		// We only care about BaseFighters attacking
+		// Sanity check: attacker should be a BaseFighter
 		if (attackerBF == null)
 		{
 			return;
