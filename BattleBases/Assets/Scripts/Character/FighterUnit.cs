@@ -77,8 +77,16 @@ public class FighterUnit : BaseFighter
 	/// <param name="args">Arguments.</param>
 	public void TargetDefeated(object sender, CombatEventArgs args)
 	{
-		// Sanity check: sender should be our target
-		if ((sender as BaseFighter) != target)
+		// Seriously, am I in this method without a valid FighterUnit?
+		if (this == null)
+		{
+			// WHYYYYYY?
+			// UPDATE: We're here not because this is null, but because the gameObject has
+			//   been destroyed. This is what "this == null" means
+			return;
+		}
+		// Sanity check: sender should be our target and the target must exist
+		if (target == null || (sender as BaseFighter) != target)
 		{
 			// Ignore
 			return;
@@ -95,6 +103,14 @@ public class FighterUnit : BaseFighter
 
 		// Remove the reference
 		target = null;
+
+		// Tell your gameObject that the battle is over
+		if (gameObject != null)
+		{
+			// But only if the gameObject hasn't been deleted?
+			// For some reason?
+			gameObject.SendMessage ("OnVictory", null, SendMessageOptions.DontRequireReceiver);
+		}
 	}
 
 	// Implementation of BaseFighter
