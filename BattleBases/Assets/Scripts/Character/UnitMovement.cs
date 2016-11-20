@@ -57,6 +57,9 @@ public class UnitMovement : MonoBehaviour
 	/// </summary>
 	public bool IsWalking { get; private set; }
 
+	// Events
+	public event CombatEventHandler DeathEvent;
+
 
 	// Initialization
 	void Awake()
@@ -163,6 +166,13 @@ public class UnitMovement : MonoBehaviour
 	/// </summary>
 	public void OnDeath()
 	{
+		// Fire ourn DeathEvent
+		CombatEventHandler hand = DeathEvent;
+		if (hand != null)
+		{
+			hand (this, new CombatEventArgs (null, CombatEventArgs.CombatMsg.IsDefeated));
+		}
+
 		// Flag ourselves as not being able to walk
 		canWalk = false;
 	}
