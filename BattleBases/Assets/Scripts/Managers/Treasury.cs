@@ -18,7 +18,7 @@ public class Treasury : MonoBehaviour, INotifyPropertyChanged
 	public int Funds
 	{
 		get { return funds; }
-		protected set 
+		set 
 		{
 			// Only allow new, positive values
 			if (value >= 0 && value != funds)

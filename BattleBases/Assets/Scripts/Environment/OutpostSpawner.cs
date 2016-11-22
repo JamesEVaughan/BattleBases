@@ -20,6 +20,11 @@ public class OutpostSpawner : MonoBehaviour, IClickable
 	/// </summary>
 	public float spawnBufferDist = 0.25f;
 
+	/// <summary>
+	/// A reference to our team's spawner.
+	/// </summary>
+	public TeamSpawner ourSpawner;
+
 	// Fields
 	/// <summary>
 	/// Where a new unit is spawned
@@ -60,9 +65,9 @@ public class OutpostSpawner : MonoBehaviour, IClickable
 
 	// Methods
 	/// <summary>
-	/// Spawns a new unit, based on the assigned prefab
+	/// Spawns a new unit, based on the assigned prefab.
+	/// Outdated! Use SpawnUnit(GameObject) for future versions!
 	/// </summary>
-	/// <returns>A reference to a newly spawned unit</returns>
 	public void SpawnUnit()
 	{
 		// First, make sure that the spawn area is clear of any units
@@ -81,6 +86,45 @@ public class OutpostSpawner : MonoBehaviour, IClickable
 		{
 			OnSpawn (spawnedUnit);
 		}
+	}
+
+	/// <summary>
+	/// Spawn the specified unit, if possible
+	/// </summary>
+	/// <returns><c>true</c>, if the unit was spawned, <c>false</c> if not.</returns>
+	/// <param name="unit">The unit to be spawned</param>
+	public bool SpawnUnit(GameObject unit)
+	{
+		// Sanity check!
+		if (unit.tag != tag)
+		{
+			// If this unit isn't on our team, don't spawn it
+			return false;
+		}
+
+		// Can we spawn a unit?
+		if (!IsSpawnAreaClear ())
+		{
+			// We can't do anything
+			return false;
+		}
+
+		// Everything's clear, spawn in the unit
+		GameObject newUnit = Instantiate (unit, spawnPoint.transform.position, 
+			                     spawnPoint.transform.rotation) as GameObject;
+
+		// Make sure this is a real unit
+		if (newUnit == null)
+		{
+			// Welp, didn't work
+			Debug.Log("Unit did not instantiate properly during SpawnUnit().");
+			return false;
+		}
+
+		// Pass on the spawn event
+		OnSpawn(newUnit);
+
+		return true;
 	}
 
 	// Helper methods

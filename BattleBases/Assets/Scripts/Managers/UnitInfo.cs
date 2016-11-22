@@ -7,7 +7,7 @@ using UnityEditor;
 /// UnitInfo
 /// </summary>
 [System.Serializable]
-public class UnitInfo
+public struct UnitInfo
 {
 	// Accessible in UnityEditor
 	/// <summary>
@@ -24,4 +24,6 @@ public class UnitInfo
 	/// The unit's prefab
 	/// </summary>
 	public GameObject unitPreFab;
+
+	// 
 }

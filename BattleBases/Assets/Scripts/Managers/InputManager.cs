@@ -7,17 +7,39 @@ using System.Collections;
 /// </summary>
 public class InputManager : MonoBehaviour
 {
+	// Accessible in UnityEditor
+	/// <summary>
+	/// This is a reference to the TeamGameObject for the player
+	/// </summary>
+	public GameObject playersTeamObject;
+
 	// Fields
 	/// <summary>
 	/// The main camera for this scene
 	/// </summary>
 	private Camera mainCam;
 
+	/// <summary>
+	/// Handy reference to the TeamSpawner for our player
+	/// </summary>
+	private TeamSpawner playersSpawner;
+
+	/// <summary>
+	/// This is a reference to the PurchaseList for the player
+	/// </summary>
+	private PurchaseList playersAvailableUnits;
+
 	// Use this for initialization
 	void Start ()
 	{
 		// Grab the Camera for the scene, the first one is the one we want
 		mainCam = Camera.main;
+
+		// Grab the TeamSpawner component off of the TeamGameObject
+		playersSpawner = playersTeamObject.GetComponent<TeamSpawner>();
+
+		// Grab the PurchaseList off of the TeamGameObject
+		playersAvailableUnits = playersTeamObject.GetComponent<PurchaseList>();
 	}
 	
 	// Update is called once per frame
@@ -61,18 +83,33 @@ public class InputManager : MonoBehaviour
 			// RayCastTarget gameobjects are always children of the real target
 			GameObject hitParent = tempHit.transform.parent.gameObject;
 
-			// Now, find out if it has a component we work with
-			IClickable tempClick = hitParent.GetComponent<IClickable>();
-
-			// If there isn't an IClickable MonoBehaviour attached
-			if (tempClick == null)
+			// New for use with TeamGameObject implementation
+			// Find out what we clicked on
+			MonoBehaviour tempBehaviour;
+			if ((tempBehaviour = hitParent.GetComponent<OutpostSpawner>()) != null)
 			{
-				// Ignore
+				// We clicked on an Outpost! 
+				// Do we have a valid TeamSpawner?
+				if (playersSpawner == null)
+				{
+					Debug.Log ("No valid TeamSpawner found for the player.");
+					return;
+				}
+
+				// A valid PurchaseList?
+				if (playersAvailableUnits == null)
+				{
+					Debug.Log ("No valid PurchaseList found for the player.");
+					return;
+				}
+
+				// Cool! Try to spawn that unit
+				// For now, just use the first unit in the list
+				playersSpawner.SpawnUnit(tempBehaviour as OutpostSpawner, playersAvailableUnits.availableUnits[0]);
+
+				// That's all!
 				return;
 			}
-
-			// Otherwise, do the click operation
-			tempClick.Clicked();
 		}
 
 
