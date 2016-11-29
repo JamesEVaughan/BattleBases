@@ -105,7 +105,7 @@ public class InputManager : MonoBehaviour
 
 				// Cool! Try to spawn that unit
 				// For now, just use the first unit in the list
-				playersSpawner.SpawnUnit(tempBehaviour as OutpostSpawner, playersAvailableUnits.availableUnits[0]);
+				playersSpawner.SpawnUnit(tempBehaviour as OutpostSpawner, playersAvailableUnits[0]);
 
 				// That's all!
 				return;
