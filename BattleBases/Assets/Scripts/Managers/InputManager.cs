@@ -13,6 +13,11 @@ public class InputManager : MonoBehaviour
 	/// </summary>
 	public GameObject playersTeamObject;
 
+	/// <summary>
+	/// The prefab of the buy menu
+	/// </summary>
+	public GameObject buyMenuPF;
+
 	// Fields
 	/// <summary>
 	/// The main camera for this scene
@@ -29,6 +34,11 @@ public class InputManager : MonoBehaviour
 	/// </summary>
 	private PurchaseList playersAvailableUnits;
 
+	/// <summary>
+	/// This is the canvas the buyMenu gets drawn to
+	/// </summary>
+	private Canvas theCanvas;
+
 	// Use this for initialization
 	void Start ()
 	{
@@ -40,6 +50,8 @@ public class InputManager : MonoBehaviour
 
 		// Grab the PurchaseList off of the TeamGameObject
 		playersAvailableUnits = playersTeamObject.GetComponent<PurchaseList>();
+
+		theCanvas = FindObjectOfType<Canvas> ();
 	}
 	
 	// Update is called once per frame
@@ -96,16 +108,20 @@ public class InputManager : MonoBehaviour
 					return;
 				}
 
-				// A valid PurchaseList?
-				if (playersAvailableUnits == null)
+				// Ok, now to bring up buy menu
+				// Do we have a buy menu?
+				if (buyMenuPF == null)
 				{
-					Debug.Log ("No valid PurchaseList found for the player.");
+					// Uh oh, tell someone
+					Debug.Log ("No buy menu has been assigned.");
 					return;
 				}
 
-				// Cool! Try to spawn that unit
-				// For now, just use the first unit in the list
-				playersSpawner.SpawnUnit(tempBehaviour as OutpostSpawner, playersAvailableUnits[0]);
+				// Make a new one and put it at the right place
+				GameObject newBuyMenu = Instantiate(buyMenuPF) as GameObject;
+				RadialBuyMenu newBuyMenuComp = newBuyMenu.GetComponent<RadialBuyMenu> ();
+				newBuyMenuComp.SetPosition (mousePos, theCanvas);
+				newBuyMenuComp.SpawnThere = tempBehaviour as OutpostSpawner;
 
 				// That's all!
 				return;

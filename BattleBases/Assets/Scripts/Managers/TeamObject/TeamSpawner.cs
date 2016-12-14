@@ -88,8 +88,8 @@ public class TeamSpawner : MonoBehaviour
 	public void SpawnUnit(OutpostSpawner spawnHere, UnitInfo spawnUnit)
 	{
 		// Sanity checks!
-		// Is it on our team? Has it been destroyed?
-		if (spawnHere.tag != tag || spawnHere == null)
+		// Is it on our team? Has it been destroyed? Is this a valid unit?
+		if (spawnHere.tag != tag || spawnHere == null || spawnUnit == null)
 		{
 			// Ignore
 			return;

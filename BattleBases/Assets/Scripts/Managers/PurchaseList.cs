@@ -16,7 +16,18 @@ public class PurchaseList : MonoBehaviour
 	// Indexer
 	public UnitInfo this[int i] 
 	{
-		get { return availableUnits [i]; }
+		get 
+		{
+			return (i < Count) ? availableUnits [i] : null; 
+		}
+	}
+
+	/// <summary>
+	/// How big the list is.
+	/// </summary>
+	public int Count
+	{
+		get { return availableUnits.Count; }
 	}
 }
 
